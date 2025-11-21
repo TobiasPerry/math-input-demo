@@ -51,6 +51,18 @@ const Homepage = () => {
       description: 'Practice solving systems of equations using substitution method',
       path: '/substitution-problem',
     },
+    {
+      id: 'substitution-problem-validation',
+      name: 'Substitution Problem (With Validation)',
+      description: 'Substitution problem with real-time API validation and feedback',
+      path: '/substitution-problem-validation',
+    },
+    {
+      id: 'difference-of-squares',
+      name: 'Difference of Squares',
+      description: 'Factor expressions using the difference of squares pattern with validation',
+      path: '/difference-of-squares',
+    },
   ];
 
   return (

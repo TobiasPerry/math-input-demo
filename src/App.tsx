@@ -7,6 +7,8 @@ import MathLiveMultilineDemo from './components/MathLiveMultilineDemo';
 import MathQuillMultilineDemo from './components/MathQuillMultilineDemo';
 import CodeMirrorLatexDemo from './components/CodeMirrorLatexDemo';
 import SubstitutionProblemDemo from './components/SubstitutionProblemDemo';
+import SubstitutionProblemWithValidation from './components/SubstitutionProblemWithValidation';
+import DifferenceOfSquaresProblem from './components/DifferenceOfSquaresProblem';
 import './App.css';
 
 const Navigation = () => {
@@ -36,6 +38,8 @@ function App() {
         <Route path="/mathquill-multiline" element={<MathQuillMultilineDemo />} />
         <Route path="/codemirror-latex" element={<CodeMirrorLatexDemo />} />
         <Route path="/substitution-problem" element={<SubstitutionProblemDemo />} />
+        <Route path="/substitution-problem-validation" element={<SubstitutionProblemWithValidation />} />
+        <Route path="/difference-of-squares" element={<DifferenceOfSquaresProblem />} />
       </Routes>
     </Router>
   );
