@@ -37,6 +37,64 @@ export interface ProblemValidationResponse {
   hints?: string[];
 }
 
+export type ValidationLineStatus = 'valid' | 'needs_review' | 'invalid' | (string & {});
+
+export interface BatchValidationOptions {
+  includeTelemetry?: boolean;
+  requestHints?: boolean;
+  llmAnalysis?: 'none' | 'summary' | 'per_line';
+}
+
+export interface BatchValidationLine {
+  index?: number;
+  lineIndex?: number;
+  original: string;
+  plainMath?: string;
+  operation?: string;
+  status: ValidationLineStatus;
+  feedback?: string;
+  errorCode?: string;
+  diagnostics?: Record<string, any>;
+  telemetry?: Record<string, any>;
+  confidence?: number;
+  sympy?: {
+    simplified?: string;
+    normalized?: string;
+    symbolsTouched?: string[];
+  };
+  llm?: {
+    summary?: string;
+    nextStepHint?: string;
+  };
+}
+
+export interface SympyCheck {
+  isSolved?: boolean;
+  studentAssignments?: Record<string, string>;
+  expectedSolution?: Array<Record<string, string>>;
+  discrepancies?: string[];
+}
+
+export interface BatchValidationOverall {
+  validSteps?: number;
+  invalidSteps?: number;
+  readyForAnswerCheck?: boolean;
+  finalAnswer?: {
+    isCorrect?: boolean;
+    feedback?: string;
+    student?: Record<string, string>;
+    expected?: Record<string, string>;
+  } | null;
+  recommendedNextAction?: string | null;
+  sympyCheck?: SympyCheck;
+}
+
+export interface BatchValidationResponse {
+  lines: BatchValidationLine[];
+  overall?: BatchValidationOverall;
+  telemetry?: Record<string, any>;
+}
+
 export interface EquivalenceResponse {
   areEquivalent: boolean;
   simplified1?: string;
@@ -192,6 +250,46 @@ export async function validateProblem(
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
     throw new Error(error.error?.message || `Problem validation failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Validate an entire set of student work lines in one request
+ */
+export async function validateProblemBatch(
+  problemType: string,
+  problemData: Record<string, any>,
+  studentWork: string[],
+  options?: BatchValidationOptions
+): Promise<BatchValidationResponse> {
+  const defaultOptions: BatchValidationOptions = {
+    includeTelemetry: true,
+    requestHints: false,
+    llmAnalysis: 'summary',
+  };
+
+  const payload: Record<string, any> = {
+    problemData,
+    studentWork,
+    options: {
+      ...defaultOptions,
+      ...(options || {}),
+    },
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/validate/problem/${problemType}/batch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+    throw new Error(error.error?.message || `Problem batch validation failed: ${response.statusText}`);
   }
 
   return response.json();

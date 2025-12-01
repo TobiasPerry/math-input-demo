@@ -1,11 +1,12 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import MathLiveMultilineEditor from './MathLiveMultilineEditor';
 import { 
-  validateProblem, 
+  validateProblemBatch, 
   getHint, 
   validateAnswer,
-  type ProblemValidationResponse,
   type HintResponse,
+  type BatchValidationLine,
+  type ValidationLineStatus,
 } from '../utils/validationApi';
 import { latexArrayToPlainMath } from '../utils/latexToPlainMath';
 import './Demo.css';
@@ -15,6 +16,16 @@ interface LineFeedback {
   isCorrect: boolean;
   feedback?: string;
   nextExpectedStep?: string;
+  status?: ValidationLineStatus;
+  operation?: string;
+  errorCode?: string;
+  errorExplanation?: string;
+  alternativeExplanation?: string;
+  diagnostics?: Record<string, any>;
+  hint?: string | null;
+  confidence?: number | null;
+  sympySimplified?: string;
+  sympyNormalized?: string;
 }
 
 const SubstitutionProblemWithValidation = () => {
@@ -32,16 +43,11 @@ const SubstitutionProblemWithValidation = () => {
   const [answerFeedback, setAnswerFeedback] = useState<string | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   const [expandedFeedbackLines, setExpandedFeedbackLines] = useState<Set<number>>(new Set());
-  const validationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const newLineValidationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stuckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const periodicValidationRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastWorkRef = useRef<string[]>(['']);
-  const currentWorkRef = useRef<string[]>(['']);
-  const lastValidationTimeRef = useRef<number>(0);
-  const newLineAddedRef = useRef<boolean>(false);
-  const isValidationInProgressRef = useRef<boolean>(false);
-  const MIN_TIME_BETWEEN_VALIDATIONS = 15000; // Minimum 15 seconds between any validations
+  const [solutionCheck, setSolutionCheck] = useState<{
+    isSolved: boolean;
+    discrepancies: string[];
+    recommendedAction: string | null;
+  } | null>(null);
 
   const problem = {
     type: 'substitution',
@@ -70,199 +76,198 @@ const SubstitutionProblemWithValidation = () => {
     ],
   };
 
-  // Validate work - only when new line added or periodic check
-  const validateWork = useCallback(async (lines: string[], force: boolean = false) => {
-    // Filter out empty lines for validation
-    const nonEmptyLines = lines.filter(line => line.trim().length > 0);
-    
+  const handleValidateAll = async () => {
+    const nonEmptyLines = work.filter(line => line.trim().length > 0);
+
     if (nonEmptyLines.length === 0) {
       setLineFeedback(new Map());
       setOverallProgress(null);
+      setAnswerFeedback(null);
+      setIsAnswerCorrect(null);
       return;
     }
 
-    // Check if validation is already in progress
-    if (isValidationInProgressRef.current) {
-      return;
-    }
-
-    // Check if we should validate
-    const now = Date.now();
-    const timeSinceLastValidation = now - lastValidationTimeRef.current;
-    
-    // Always enforce minimum time between validations
-    if (timeSinceLastValidation < MIN_TIME_BETWEEN_VALIDATIONS) {
-      return;
-    }
-
-    // Only validate if forced (new line added) - no periodic validation
-    if (!force && !newLineAddedRef.current) {
-      return;
-    }
-
-    // Mark validation as in progress
-    isValidationInProgressRef.current = true;
-    
-    // Reset new line flag
-    newLineAddedRef.current = false;
-    lastValidationTimeRef.current = now;
     setIsValidating(true);
-    
+    setExpandedFeedbackLines(new Set());
+    setAnswerFeedback(null);
+    setIsAnswerCorrect(null);
+
     try {
-      const currentIndex = nonEmptyLines.length - 1;
-      
-      // Convert LaTeX to plain math notation before sending to API
-      // MathLive outputs LaTeX (e.g., "3x+2y-2y=12-2\left(2x+1\right)")
-      // but SymPy needs plain math notation (e.g., "3x+2y-2y=12-2(2x+1)")
       const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
-      
-      // Validate the entire problem context
-      const result: ProblemValidationResponse = await validateProblem(
+      const batchResult = await validateProblemBatch(
         problem.type,
         { equations: problem.equations },
         plainMathLines,
-        currentIndex
+        {
+          includeTelemetry: true,
+          requestHints: false,
+          llmAnalysis: 'summary',
+        }
       );
 
-      // Update line feedback - use the API result directly
-      // The API should now handle equivalence checking internally
-      const newFeedback = new Map(lineFeedback);
-      const lineValidationResult = result.lineValidation;
-      
-      newFeedback.set(lineValidationResult.lineIndex, {
-        isValid: lineValidationResult.isValid,
-        isCorrect: lineValidationResult.isCorrect,
-        feedback: lineValidationResult.feedback,
-        nextExpectedStep: lineValidationResult.nextExpectedStep,
-      });
-      setLineFeedback(newFeedback);
+      const feedbackEntries = new Map<number, LineFeedback>();
+      const responseLines = batchResult.lines ?? [];
 
-      // Update overall progress (but don't show "onTrack" as it's too prescriptive)
-      // Only show progress if it's meaningful, not based on following a specific path
-      if (result.overallProgress) {
-        setOverallProgress({
-          ...result.overallProgress,
-          onTrack: true, // Always show as on track - we don't want to penalize alternative approaches
+      responseLines.forEach((line: BatchValidationLine, idx) => {
+        const resolvedIndex =
+          typeof line.index === 'number'
+            ? line.index
+            : typeof line.lineIndex === 'number'
+            ? line.lineIndex
+            : idx;
+
+        feedbackEntries.set(resolvedIndex, {
+          isValid: line.status !== 'invalid',
+          isCorrect: line.status === 'valid',
+          feedback: line.feedback || line.llm?.summary,
+          nextExpectedStep: line.llm?.nextStepHint,
+          status: line.status,
+          operation: line.operation,
+          errorCode: line.errorCode,
+          errorExplanation: line.diagnostics?.errorExplanation || line.diagnostics?.explanation,
+          alternativeExplanation: line.diagnostics?.alternative || line.diagnostics?.alternativeExplanation || line.llm?.summary,
+          diagnostics: line.diagnostics,
+          hint: line.llm?.nextStepHint || null,
+          confidence: line.confidence ?? null,
+          sympySimplified: line.sympy?.simplified,
+          sympyNormalized: line.sympy?.normalized,
         });
-      }
+      });
 
-      // Don't show "next step" suggestions - let students find their own path
-
-      // Track work changes for hint system (but don't auto-suggest based on "onTrack")
-      if (JSON.stringify(nonEmptyLines) !== JSON.stringify(lastWorkRef.current)) {
-        // Work changed, clear stuck timer
-        if (stuckTimerRef.current) {
-          clearTimeout(stuckTimerRef.current);
-        }
-        lastWorkRef.current = [...nonEmptyLines];
-      }
-
-      // Check if this looks like a final answer
-      // Use plain math version for pattern matching
-      const lastLinePlain = plainMathLines[plainMathLines.length - 1].toLowerCase();
-      if (lastLinePlain.includes('x =') && lastLinePlain.includes('y =')) {
-        // Try to extract answer and validate
-        try {
-          const xMatch = lastLinePlain.match(/x\s*=\s*([^\s,]+)/);
-          const yMatch = lastLinePlain.match(/y\s*=\s*([^\s,]+)/);
-          
-          if (xMatch && yMatch) {
-            const answerResult = await validateAnswer(
-              problem.type,
-              { equations: problem.equations },
-              {
-                x: xMatch[1].trim(),
-                y: yMatch[1].trim(),
-              }
-            );
+      // Enhance feedback with solution-level insights from sympyCheck
+      if (batchResult.overall?.sympyCheck) {
+        const sympyCheck = batchResult.overall.sympyCheck;
+        const discrepancies = sympyCheck.discrepancies;
+        
+        // If solution is not complete, try to identify problematic lines
+        if (!sympyCheck.isSolved && discrepancies && discrepancies.length > 0) {
+          // Mark lines that might be problematic based on LLM analysis
+          // The LLM should have identified which lines have issues in its summary
+          responseLines.forEach((line: BatchValidationLine, idx) => {
+            const resolvedIndex =
+              typeof line.index === 'number'
+                ? line.index
+                : typeof line.lineIndex === 'number'
+                ? line.lineIndex
+                : idx;
             
-            setIsAnswerCorrect(answerResult.isCorrect);
-            setAnswerFeedback(answerResult.feedback || null);
-          }
-        } catch (error) {
-          // Answer validation failed, ignore
-          console.error('Answer validation error:', error);
+            const existingFeedback = feedbackEntries.get(resolvedIndex);
+            if (existingFeedback) {
+              // If line has needs_review or invalid status, it's likely problematic
+              if (line.status === 'needs_review' || line.status === 'invalid') {
+                const llmSummary = line.llm?.summary;
+                // Enhance feedback with discrepancy context if LLM identified it
+                if (llmSummary && discrepancies.some(d => 
+                  llmSummary.toLowerCase().includes(d.toLowerCase().substring(0, 20))
+                )) {
+                  feedbackEntries.set(resolvedIndex, {
+                    ...existingFeedback,
+                    feedback: existingFeedback.feedback 
+                      ? `${existingFeedback.feedback} (${discrepancies.join('; ')})`
+                      : discrepancies.join('; '),
+                    // Preserve error and alternative explanation fields
+                    errorCode: existingFeedback.errorCode || line.errorCode,
+                    errorExplanation: existingFeedback.errorExplanation || line.diagnostics?.errorExplanation || line.diagnostics?.explanation,
+                    alternativeExplanation: existingFeedback.alternativeExplanation || line.diagnostics?.alternative || line.diagnostics?.alternativeExplanation || llmSummary,
+                  });
+                }
+              }
+            }
+          });
         }
       }
 
+      const orderedFeedback = new Map(
+        Array.from(feedbackEntries.entries()).sort((a, b) => a[0] - b[0])
+      );
+
+      setLineFeedback(orderedFeedback);
+
+      if (batchResult.overall) {
+        const stepsCompleted =
+          batchResult.overall.validSteps ??
+          responseLines.filter(line => line.status === 'valid').length;
+
+        setOverallProgress({
+          stepsCompleted,
+          totalSteps: responseLines.length || nonEmptyLines.length,
+          onTrack: (batchResult.overall.invalidSteps ?? 0) === 0,
+        });
+
+        // Use sympyCheck for solution-level validation
+        if (batchResult.overall.sympyCheck) {
+          const sympyCheck = batchResult.overall.sympyCheck;
+          setSolutionCheck({
+            isSolved: sympyCheck.isSolved ?? false,
+            discrepancies: sympyCheck.discrepancies ?? [],
+            recommendedAction: batchResult.overall.recommendedNextAction ?? null,
+          });
+
+          // If sympyCheck says it's solved, mark as correct
+          if (sympyCheck.isSolved) {
+            setIsAnswerCorrect(true);
+            setAnswerFeedback('Perfect! Your solution is correct and complete.');
+          } else if (sympyCheck.discrepancies && sympyCheck.discrepancies.length > 0) {
+            setIsAnswerCorrect(false);
+            setAnswerFeedback(
+              `Solution incomplete: ${sympyCheck.discrepancies.join('. ')}`
+            );
+          }
+        } else if (batchResult.overall.finalAnswer) {
+          // Fallback to finalAnswer if sympyCheck not available
+          setIsAnswerCorrect(batchResult.overall.finalAnswer.isCorrect ?? null);
+          setAnswerFeedback(batchResult.overall.finalAnswer.feedback ?? null);
+        }
+      } else {
+        setOverallProgress(null);
+        setSolutionCheck(null);
+      }
+
+      if (!batchResult.overall?.finalAnswer) {
+        const lastLine = plainMathLines[plainMathLines.length - 1] || '';
+        if (lastLine && /x\s*=/.test(lastLine) && /y\s*=/.test(lastLine)) {
+          try {
+            const xMatch = lastLine.match(/x\s*=\s*([^\s,]+)/i);
+            const yMatch = lastLine.match(/y\s*=\s*([^\s,]+)/i);
+
+            if (xMatch && yMatch) {
+              const answerResult = await validateAnswer(
+                problem.type,
+                { equations: problem.equations },
+                {
+                  x: xMatch[1].trim(),
+                  y: yMatch[1].trim(),
+                }
+              );
+
+              setIsAnswerCorrect(answerResult.isCorrect);
+              setAnswerFeedback(answerResult.feedback || null);
+            }
+          } catch (error) {
+            console.error('Answer validation error:', error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Validation error:', error);
-      // Show error to user in a non-intrusive way
       setLineFeedback(new Map());
+      setOverallProgress(null);
     } finally {
       setIsValidating(false);
-      isValidationInProgressRef.current = false;
-    }
-  }, [problem, lineFeedback]);
-
-  // Detect when a new line is added (Enter pressed)
-  const handleWorkChange = (newWork: string[]) => {
-    const previousLength = work.filter(line => line.trim().length > 0).length;
-    const newLength = newWork.filter(line => line.trim().length > 0).length;
-    
-    // Check if a new line was added (only trigger on actual new line, not every keystroke)
-    const newLineAdded = newLength > previousLength;
-    const lineDeleted = newLength < previousLength;
-    
-    // Update ref to track current work
-    currentWorkRef.current = newWork;
-    setWork(newWork);
-    setHint(null); // Clear hint when work changes
-    setAnswerFeedback(null);
-    setIsAnswerCorrect(null);
-    
-    // If a line was deleted, clear any pending validation and don't validate
-    if (lineDeleted) {
-      if (newLineValidationTimeoutRef.current) {
-        clearTimeout(newLineValidationTimeoutRef.current);
-        newLineValidationTimeoutRef.current = null;
-      }
-      newLineAddedRef.current = false;
-      return; // Don't validate when deleting
-    }
-    
-    // Only validate if a new line was actually added (Enter pressed)
-    // This prevents validation on every keystroke or when deleting
-    if (newLineAdded) {
-      newLineAddedRef.current = true;
-      
-      // Clear any pending validation timeout
-      if (newLineValidationTimeoutRef.current) {
-        clearTimeout(newLineValidationTimeoutRef.current);
-      }
-      
-      // Use setTimeout to debounce slightly and ensure minimum time has passed
-      const now = Date.now();
-      const timeSinceLastValidation = now - lastValidationTimeRef.current;
-      const delay = Math.max(0, MIN_TIME_BETWEEN_VALIDATIONS - timeSinceLastValidation);
-      
-      newLineValidationTimeoutRef.current = setTimeout(() => {
-        validateWork(newWork, true);
-        newLineValidationTimeoutRef.current = null;
-      }, delay);
-    } else {
-      // If no new line was added (just editing existing line), clear the flag
-      newLineAddedRef.current = false;
     }
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-      }
-      if (newLineValidationTimeoutRef.current) {
-        clearTimeout(newLineValidationTimeoutRef.current);
-      }
-      if (stuckTimerRef.current) {
-        clearTimeout(stuckTimerRef.current);
-      }
-      if (periodicValidationRef.current) {
-        clearInterval(periodicValidationRef.current);
-      }
-    };
-  }, []);
+  const handleWorkChange = (newWork: string[]) => {
+    setWork(newWork);
+    setHint(null);
+    setHintLevel(null);
+    setAnswerFeedback(null);
+    setIsAnswerCorrect(null);
+    setLineFeedback(new Map());
+    setOverallProgress(null);
+    setExpandedFeedbackLines(new Set());
+    setSolutionCheck(null);
+  };
 
   const handleGetHint = async () => {
     const nonEmptyLines = work.filter(line => line.trim().length > 0);
@@ -287,11 +292,12 @@ const SubstitutionProblemWithValidation = () => {
     }
   };
 
-  const getFeedbackColor = (isCorrect: boolean | null, isValid: boolean) => {
-    if (isCorrect === true) return '#4caf50'; // Green
-    if (isCorrect === false) return '#f44336'; // Red
-    if (isValid) return '#2196f3'; // Blue
-    return '#ff9800'; // Orange
+  const getFeedbackColor = (feedback: LineFeedback) => {
+    if (feedback.isCorrect === true) return '#4caf50'; // Green
+    if (feedback.status === 'needs_review') return '#ff9800'; // Amber
+    if (feedback.isCorrect === false) return '#f44336'; // Red
+    if (feedback.isValid) return '#2196f3'; // Blue
+    return '#ff9800'; // Default to amber for unknown
   };
 
   const toggleFeedbackExpansion = (lineIndex: number) => {
@@ -308,15 +314,16 @@ const SubstitutionProblemWithValidation = () => {
 
   const getFeedbackIcon = (feedback: LineFeedback) => {
     if (feedback.isCorrect) return '✓';
+    if (feedback.status === 'needs_review') return '⚠';
     if (feedback.isValid) return 'ℹ';
-    return '⚠';
+    return '✗';
   };
 
   return (
     <div className="demo-container">
       <div className="demo-header">
         <h1>System of Equations with Validation</h1>
-        <p>Solve the system of equations using any method you prefer. Get real-time feedback on your work!</p>
+        <p>Solve the system of equations using any method you prefer. Validate your work whenever you're ready for feedback.</p>
       </div>
 
       <div className="demo-content">
@@ -405,7 +412,10 @@ const SubstitutionProblemWithValidation = () => {
                 <strong>💡 Hint ({hintLevel}):</strong> {hint}
               </div>
               <button
-                onClick={() => setHint(null)}
+                onClick={() => {
+                  setHint(null);
+                  setHintLevel(null);
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -421,6 +431,50 @@ const SubstitutionProblemWithValidation = () => {
           </div>
         )}
 
+
+        {/* Solution Check Feedback */}
+        {solutionCheck && (
+          <div style={{
+            padding: '1rem',
+            backgroundColor: solutionCheck.isSolved
+              ? 'rgba(76, 175, 80, 0.2)' 
+              : 'rgba(255, 152, 0, 0.2)',
+            border: `1px solid ${solutionCheck.isSolved ? 'rgba(76, 175, 80, 0.5)' : 'rgba(255, 152, 0, 0.5)'}`,
+            borderRadius: '8px',
+            marginBottom: '1rem',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'start', gap: '0.5rem', marginBottom: solutionCheck.discrepancies.length > 0 || solutionCheck.recommendedAction ? '0.75rem' : 0 }}>
+              <strong style={{ fontSize: '1.1rem' }}>
+                {solutionCheck.isSolved ? '✓ Solution Complete!' : '⚠ Solution Incomplete'}
+              </strong>
+            </div>
+            
+            {solutionCheck.discrepancies.length > 0 && (
+              <div style={{ marginBottom: '0.75rem' }}>
+                <strong>Issues found:</strong>
+                <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
+                  {solutionCheck.discrepancies.map((disc, idx) => (
+                    <li key={idx} style={{ marginBottom: '0.25rem', color: 'rgba(255, 255, 255, 0.9)' }}>
+                      {disc}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {solutionCheck.recommendedAction && (
+              <div style={{
+                padding: '0.75rem',
+                backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                border: '1px solid rgba(33, 150, 243, 0.5)',
+                borderRadius: '6px',
+                marginTop: solutionCheck.discrepancies.length > 0 ? '0.5rem' : 0,
+              }}>
+                <strong>💡 Recommended:</strong> {solutionCheck.recommendedAction}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Answer Feedback */}
         {answerFeedback && (
@@ -467,6 +521,22 @@ const SubstitutionProblemWithValidation = () => {
                 💡 Get Hint
               </button>
               <button
+                onClick={() => void handleValidateAll()}
+                disabled={isValidating}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#4caf50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: isValidating ? 'not-allowed' : 'pointer',
+                  fontSize: '0.9rem',
+                  opacity: isValidating ? 0.7 : 1,
+                }}
+              >
+                ✅ Validate All Lines
+              </button>
+              <button
                 onClick={() => setShowSolution(!showSolution)}
                 style={{
                   padding: '0.5rem 1rem',
@@ -507,7 +577,7 @@ const SubstitutionProblemWithValidation = () => {
                 paddingTop: '0.5rem',
               }}>
                 {Array.from(lineFeedback.entries()).map(([lineIndex, feedback]) => {
-                  const iconColor = getFeedbackColor(feedback.isCorrect, feedback.isValid);
+                  const iconColor = getFeedbackColor(feedback);
                   
                   return (
                     <div key={lineIndex} style={{ 
@@ -539,7 +609,11 @@ const SubstitutionProblemWithValidation = () => {
                         onMouseLeave={(e) => {
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }}
-                        title={`Line ${lineIndex + 1}: Click to see feedback`}
+                        title={
+                          feedback.errorCode || feedback.errorExplanation
+                            ? `Line ${lineIndex + 1}: ${feedback.errorCode || 'Error'} - Click for details`
+                            : `Line ${lineIndex + 1}: Click to see feedback`
+                        }
                       >
                         {getFeedbackIcon(feedback)}
                       </button>
@@ -554,7 +628,7 @@ const SubstitutionProblemWithValidation = () => {
           {Array.from(lineFeedback.entries())
             .filter(([lineIndex]) => expandedFeedbackLines.has(lineIndex))
             .map(([lineIndex, feedback]) => {
-              const iconColor = getFeedbackColor(feedback.isCorrect, feedback.isValid);
+              const iconColor = getFeedbackColor(feedback);
               return (
                 <div
                   key={`expanded-${lineIndex}`}
@@ -568,10 +642,99 @@ const SubstitutionProblemWithValidation = () => {
                     color: 'rgba(255, 255, 255, 0.9)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <div>
-                      <strong>Line {lineIndex + 1}:</strong> {feedback.feedback || 
-                        (feedback.isCorrect ? '✓ Correct!' : feedback.isValid ? 'Valid expression' : 'Needs review')}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '0.5rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <strong>Line {lineIndex + 1}:</strong>{' '}
+                      {feedback.feedback ||
+                        (feedback.status === 'needs_review'
+                          ? 'Needs review'
+                          : feedback.isCorrect
+                          ? '✓ Correct!'
+                          : feedback.isValid
+                          ? 'Valid expression'
+                          : 'Check this step')}
+                      {feedback.status === 'needs_review' && solutionCheck && !solutionCheck.isSolved && (
+                        <div style={{ 
+                          marginTop: '0.5rem', 
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem',
+                          fontStyle: 'italic'
+                        }}>
+                          ⚠ This line may be contributing to the incomplete solution.
+                          {solutionCheck.discrepancies.length > 0 && (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              Related issues: {solutionCheck.discrepancies.join('; ')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* Identified Error Section */}
+                      {(feedback.errorCode || feedback.errorExplanation) && (
+                        <div style={{ 
+                          marginTop: '0.5rem', 
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(244, 67, 54, 0.15)',
+                          border: '1px solid rgba(244, 67, 54, 0.4)',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem'
+                        }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: '#ff5252' }}>
+                            ✗ Identified Error:
+                          </div>
+                          {feedback.errorCode && (
+                            <div style={{ marginBottom: feedback.errorExplanation ? '0.25rem' : 0 }}>
+                              <strong>Error Code:</strong> {feedback.errorCode}
+                            </div>
+                          )}
+                          {feedback.errorExplanation && (
+                            <div>
+                              {feedback.errorExplanation}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Alternative Explanation Section */}
+                      {feedback.alternativeExplanation && feedback.status !== 'valid' && (
+                        <div style={{ 
+                          marginTop: '0.5rem', 
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(33, 150, 243, 0.15)',
+                          border: '1px solid rgba(33, 150, 243, 0.4)',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem'
+                        }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: '#64b5f6' }}>
+                            💡 Alternative Explanation:
+                          </div>
+                          <div>
+                            {feedback.alternativeExplanation}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {feedback.operation && (
+                        <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                          Operation: {feedback.operation}
+                        </div>
+                      )}
+                      {feedback.hint && (
+                        <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                          Next step hint: {feedback.hint}
+                        </div>
+                      )}
+                      {feedback.sympySimplified && (
+                        <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', opacity: 0.8, fontFamily: 'monospace' }}>
+                          Simplified: {feedback.sympySimplified}
+                        </div>
+                      )}
+                      {typeof feedback.confidence === 'number' && (
+                        <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                          Confidence: {(feedback.confidence * 100).toFixed(0)}%
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => toggleFeedbackExpansion(lineIndex)}
@@ -597,7 +760,7 @@ const SubstitutionProblemWithValidation = () => {
             color: 'rgba(255, 255, 255, 0.6)',
             fontStyle: 'italic',
           }}>
-            💡 Tip: Press Enter to create a new line. Get real-time feedback as you work!
+            💡 Tip: Press Enter to create a new line, then click "Validate All Lines" whenever you want feedback.
           </div>
         </div>
 
@@ -642,7 +805,7 @@ const SubstitutionProblemWithValidation = () => {
           <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(100, 108, 255, 0.1)', borderRadius: '8px' }}>
             <strong>💡 Validation Features:</strong>
             <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-              <li>Real-time feedback on each line of work</li>
+              <li>Validate every line at once with the "Validate All Lines" button</li>
               <li>Validates mathematical correctness, not solution method</li>
               <li>Get hints if you're stuck (click the hint button)</li>
               <li>Final answer validation when you're done</li>
