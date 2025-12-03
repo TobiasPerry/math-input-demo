@@ -28,7 +28,7 @@ interface LineFeedback {
   sympyNormalized?: string;
 }
 
-const DifferenceOfSquaresProblem = () => {
+const ReductionEqualizationProblem = () => {
   const [work, setWork] = useState<string[]>(['']);
   const [showSolution, setShowSolution] = useState(false);
   const [lineFeedback, setLineFeedback] = useState<Map<number, LineFeedback>>(new Map());
@@ -50,19 +50,35 @@ const DifferenceOfSquaresProblem = () => {
   } | null>(null);
 
   const problem = {
-    type: 'factor',
-    title: 'Difference of Squares',
-    description: 'Factor the following expression using the difference of squares pattern:',
-    expression: 'x^2 - 16',
+    type: 'elimination',
+    title: 'System of Equations - Reduction and Equalization',
+    description: 'Solve the following system of equations using the reduction and equalization method:',
+    equations: [
+      '3x + 2y = 8',
+      '2x - 3y = 1',
+    ],
     solution: [
-      'Step 1: Identify the pattern',
-      'x^2 - 16 = x^2 - 4^2',
-      'Step 2: Apply difference of squares formula',
-      'a^2 - b^2 = (a + b)(a - b)',
-      'Step 3: Substitute a = x and b = 4',
-      'x^2 - 16 = (x + 4)(x - 4)',
-      'Step 4: Final answer',
-      '(x + 4)(x - 4)',
+      'Step 1: Multiply the first equation by 2',
+      '2(3x + 2y) = 2(8)',
+      '6x + 4y = 16',
+      'Step 2: Multiply the second equation by 3',
+      '3(2x - 3y) = 3(1)',
+      '6x - 9y = 3',
+      'Step 3: Subtract the second equation from the first',
+      '(6x + 4y) - (6x - 9y) = 16 - 3',
+      '6x + 4y - 6x + 9y = 13',
+      'Step 4: Simplify',
+      '13y = 13',
+      'Step 5: Solve for y',
+      'y = 1',
+      'Step 6: Substitute y = 1 into the first equation',
+      '3x + 2(1) = 8',
+      '3x + 2 = 8',
+      'Step 7: Solve for x',
+      '3x = 6',
+      'x = 2',
+      'Step 8: Final answer',
+      'x = 2, \\quad y = 1',
     ],
   };
 
@@ -87,7 +103,7 @@ const DifferenceOfSquaresProblem = () => {
       const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
       const batchResult = await validateProblemBatch(
         problem.type,
-        { expression: problem.expression },
+        { equations: problem.equations },
         plainMathLines,
         {
           includeTelemetry: true,
@@ -212,21 +228,26 @@ const DifferenceOfSquaresProblem = () => {
         setSolutionCheck(null);
       }
 
-      // Fallback answer check for factored form
-      if (!batchResult.overall?.finalAnswer && !batchResult.overall?.sympyCheck) {
+      if (!batchResult.overall?.finalAnswer) {
         const lastLine = plainMathLines[plainMathLines.length - 1] || '';
-        if (lastLine && lastLine.includes('(') && lastLine.includes(')')) {
+        if (lastLine && /x\s*=/.test(lastLine) && /y\s*=/.test(lastLine)) {
           try {
-            const answerResult = await validateAnswer(
-              problem.type,
-              { expression: problem.expression },
-              {
-                factored: lastLine,
-              }
-            );
-            
-            setIsAnswerCorrect(answerResult.isCorrect);
-            setAnswerFeedback(answerResult.feedback || null);
+            const xMatch = lastLine.match(/x\s*=\s*([^\s,]+)/i);
+            const yMatch = lastLine.match(/y\s*=\s*([^\s,]+)/i);
+
+            if (xMatch && yMatch) {
+              const answerResult = await validateAnswer(
+                problem.type,
+                { equations: problem.equations },
+                {
+                  x: xMatch[1].trim(),
+                  y: yMatch[1].trim(),
+                }
+              );
+
+              setIsAnswerCorrect(answerResult.isCorrect);
+              setAnswerFeedback(answerResult.feedback || null);
+            }
           } catch (error) {
             console.error('Answer validation error:', error);
           }
@@ -277,15 +298,11 @@ const DifferenceOfSquaresProblem = () => {
   };
 
   const getFeedbackColor = (feedback: LineFeedback) => {
-    // Prioritize status-based coloring for better problem identification
-    if (feedback.status === 'valid') return '#4caf50'; // Green
-    if (feedback.status === 'invalid') return '#f44336'; // Red
-    if (feedback.status === 'needs_review') return '#ff9800'; // Orange
-    // Fallback to old logic
     if (feedback.isCorrect === true) return '#4caf50'; // Green
+    if (feedback.status === 'needs_review') return '#ff9800'; // Amber
     if (feedback.isCorrect === false) return '#f44336'; // Red
     if (feedback.isValid) return '#2196f3'; // Blue
-    return '#ff9800'; // Orange
+    return '#ff9800'; // Default to amber for unknown
   };
 
   const toggleFeedbackExpansion = (lineIndex: number) => {
@@ -301,7 +318,7 @@ const DifferenceOfSquaresProblem = () => {
   };
 
   const getFeedbackIcon = (feedback: LineFeedback) => {
-    if (feedback.isCorrect || feedback.status === 'valid') return '✓';
+    if (feedback.isCorrect) return '✓';
     if (feedback.status === 'needs_review') return '⚠';
     if (feedback.isValid) return 'ℹ';
     return '✗';
@@ -310,8 +327,8 @@ const DifferenceOfSquaresProblem = () => {
   return (
     <div className="demo-container">
       <div className="demo-header">
-        <h1>Difference of Squares with Validation</h1>
-        <p>Factor the expression using the difference of squares pattern. Get real-time feedback on your work!</p>
+        <h1>System of Equations - Reduction and Equalization</h1>
+        <p>Solve the system of equations using the reduction and equalization method. Validate your work whenever you're ready for feedback.</p>
       </div>
 
       <div className="demo-content">
@@ -328,15 +345,20 @@ const DifferenceOfSquaresProblem = () => {
               {problem.description}
             </p>
             <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '0.5rem',
               fontFamily: 'monospace',
-              fontSize: '1.5rem',
-              padding: '0.5rem',
-              textAlign: 'center',
+              fontSize: '1.2rem',
             }}>
-              {problem.expression}
+              {problem.equations.map((eq, i) => (
+                <div key={i} style={{ padding: '0.5rem' }}>
+                  {eq}
+                </div>
+              ))}
             </div>
             <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
-              <strong>Hint:</strong> The difference of squares formula is: <code>a² - b² = (a + b)(a - b)</code>
+              <strong>Hint:</strong> Multiply one or both equations by constants to make coefficients equal, then add or subtract to eliminate a variable.
             </p>
           </div>
         </div>
@@ -369,7 +391,7 @@ const DifferenceOfSquaresProblem = () => {
               }} />
             </div>
             <p style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', marginTop: '0.5rem', marginBottom: 0 }}>
-              Keep going! There are many valid ways to approach this problem.
+              Keep going! There are many valid ways to solve this problem.
             </p>
           </div>
         )}
@@ -398,7 +420,10 @@ const DifferenceOfSquaresProblem = () => {
                 <strong>💡 Hint ({hintLevel}):</strong> {hint}
               </div>
               <button
-                onClick={() => setHint(null)}
+                onClick={() => {
+                  setHint(null);
+                  setHintLevel(null);
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -522,7 +547,7 @@ const DifferenceOfSquaresProblem = () => {
                 onClick={() => setShowSolution(!showSolution)}
                 style={{
                   padding: '0.5rem 1rem',
-                  backgroundColor: showSolution ? '#646cff' : 'rgba(100, 108, 255, 0.3)',
+                  backgroundColor: showSolution ? '#ff6b6b' : '#646cff',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -530,12 +555,11 @@ const DifferenceOfSquaresProblem = () => {
                   fontSize: '0.9rem',
                 }}
               >
-                {showSolution ? 'Hide' : 'Show'} Solution
+                {showSolution ? 'Hide Solution' : 'Show Solution'}
               </button>
             </div>
           </div>
-
-          {/* Work Editor with Feedback Icons */}
+          
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
             <div style={{ flex: 1 }}>
               <MathLiveMultilineEditor
@@ -544,57 +568,69 @@ const DifferenceOfSquaresProblem = () => {
                 minLines={1}
                 showLineNumbers={true}
                 virtualKeyboard={true}
-                fontSize="20px"
+                containerStyle={{
+                  minHeight: '400px',
+                }}
               />
             </div>
             
-            {/* Feedback Icons Column */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: '0.5rem',
-              paddingTop: '0.5rem',
-              minWidth: '40px',
-            }}>
-              {work.map((line, index) => {
-                if (line.trim() === '') return null;
-                const feedback = lineFeedback.get(index);
-                if (!feedback) return <div key={index} style={{ height: '40px' }} />;
-                
-                return (
-                  <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => toggleFeedbackExpansion(index)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: getFeedbackColor(feedback),
-                        cursor: 'pointer',
-                        fontSize: '1.5rem',
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '4px',
-                        transition: 'background-color 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
-                      title={
-                        feedback.errorCode || feedback.errorExplanation
-                          ? `Line ${index + 1}: ${feedback.errorCode || 'Error'} - Click for details`
-                          : `Line ${index + 1}: Click to see feedback`
-                      }
-                    >
-                      {getFeedbackIcon(feedback)}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Feedback icons column */}
+            {lineFeedback.size > 0 && (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '0.5rem',
+                minWidth: '3rem',
+                paddingTop: '0.5rem',
+              }}>
+                {Array.from(lineFeedback.entries()).map(([lineIndex, feedback]) => {
+                  const iconColor = getFeedbackColor(feedback);
+                  
+                  return (
+                    <div key={lineIndex} style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                    }}>
+                      <button
+                        onClick={() => toggleFeedbackExpansion(lineIndex)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: iconColor,
+                          fontSize: '1.5rem',
+                          cursor: 'pointer',
+                          padding: '0.25rem',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '2rem',
+                          height: '2rem',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = iconColor + '20';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                        title={
+                          feedback.errorCode || feedback.errorExplanation
+                            ? `Line ${lineIndex + 1}: ${feedback.errorCode || 'Error'} - Click for details`
+                            : `Line ${lineIndex + 1}: Click to see feedback`
+                        }
+                      >
+                        {getFeedbackIcon(feedback)}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-
+          
           {/* Expanded feedback messages below (for better mobile experience) */}
           {Array.from(lineFeedback.entries())
             .filter(([lineIndex]) => expandedFeedbackLines.has(lineIndex))
@@ -735,28 +771,58 @@ const DifferenceOfSquaresProblem = () => {
           </div>
         </div>
 
-        {/* Solution (Toggleable) */}
+        {/* Solution (Hidden by default) */}
         {showSolution && (
-          <div className="input-section" style={{ marginTop: '2rem' }}>
-            <h2>Solution</h2>
+          <div className="info-section" style={{ marginTop: '2rem' }}>
+            <h3>Solution</h3>
             <div style={{ 
-              padding: '1.5rem', 
-              backgroundColor: 'rgba(100, 108, 255, 0.1)',
+              padding: '1rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '8px',
-              border: '1px solid rgba(100, 108, 255, 0.3)',
+              marginTop: '1rem',
             }}>
-              {problem.solution.map((step, i) => (
-                <div key={i} style={{ marginBottom: '0.5rem', fontFamily: 'monospace' }}>
-                  {step}
-                </div>
-              ))}
+              <MathLiveMultilineEditor
+                initialEquations={problem.solution}
+                onChange={() => {}} // Read-only
+                minLines={problem.solution.length}
+                showLineNumbers={true}
+                virtualKeyboard={false}
+                containerStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                  pointerEvents: 'none',
+                  opacity: 0.9,
+                }}
+              />
             </div>
           </div>
         )}
+
+        {/* Instructions */}
+        <div className="info-section" style={{ marginTop: '2rem' }}>
+          <h3>How to Use</h3>
+          <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+            The reduction and equalization method (also called elimination) involves:
+          </p>
+          <ul style={{ paddingLeft: '1.5rem', lineHeight: '1.8', marginBottom: '1rem' }}>
+            <li><strong>Step 1:</strong> Multiply one or both equations by constants to make coefficients of one variable equal</li>
+            <li><strong>Step 2:</strong> Add or subtract the equations to eliminate that variable</li>
+            <li><strong>Step 3:</strong> Solve for the remaining variable</li>
+            <li><strong>Step 4:</strong> Substitute back into one of the original equations to find the other variable</li>
+          </ul>
+          <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(100, 108, 255, 0.1)', borderRadius: '8px' }}>
+            <strong>💡 Validation Features:</strong>
+            <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
+              <li>Validate every line at once with the "Validate All Lines" button</li>
+              <li>Validates mathematical correctness, not solution method</li>
+              <li>Get hints if you're stuck (click the hint button)</li>
+              <li>Final answer validation when you're done</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default DifferenceOfSquaresProblem;
+export default ReductionEqualizationProblem;
 

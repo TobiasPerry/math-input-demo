@@ -63,6 +63,12 @@ const Homepage = () => {
       description: 'Factor expressions using the difference of squares pattern with validation',
       path: '/difference-of-squares',
     },
+    {
+      id: 'reduction-equalization',
+      name: 'Reduction and Equalization',
+      description: 'Solve systems of equations using the reduction and equalization method with validation',
+      path: '/reduction-equalization',
+    },
   ];
 
   return (
