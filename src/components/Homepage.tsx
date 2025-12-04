@@ -2,116 +2,35 @@ import { Link } from 'react-router-dom';
 import './Homepage.css';
 
 const Homepage = () => {
-  const singleLineDemos = [
+  const pages = [
     {
-      id: 'mathlive',
-      name: 'MathLive',
-      description: 'A modern, accessible math input field with LaTeX support',
-      path: '/mathlive',
+      id: 'problem-input',
+      name: 'Problem Input',
+      description: 'Select or create a problem to solve with chat feedback',
+      path: '/',
     },
     {
-      id: 'mathquill',
-      name: 'MathQuill',
-      description: 'An easy-to-use math input editor with LaTeX output',
-      path: '/mathquill',
-    },
-    {
-      id: 'desmos',
-      name: 'Desmos Graphing Calculator',
-      description: 'Full Desmos calculator with expression input and graph visualization',
-      path: '/desmos',
-    },
-  ];
-
-  const multilineDemos = [
-    {
-      id: 'mathlive-multiline',
-      name: 'MathLive Multi-line',
-      description: 'Multiple MathLive fields for writing several equations',
-      path: '/mathlive-multiline',
-    },
-    {
-      id: 'mathquill-multiline',
-      name: 'MathQuill Multi-line',
-      description: 'Multiple MathQuill fields for writing several equations',
-      path: '/mathquill-multiline',
-    },
-    {
-      id: 'codemirror-latex',
-      name: 'CodeMirror + LaTeX',
-      description: 'CodeMirror editor with KaTeX rendering for multi-line equations',
-      path: '/codemirror-latex',
-    },
-  ];
-
-  const problemDemos = [
-    {
-      id: 'substitution-problem',
-      name: 'Substitution Problem',
-      description: 'Practice solving systems of equations using substitution method',
-      path: '/substitution-problem',
-    },
-    {
-      id: 'substitution-problem-validation',
-      name: 'Substitution Problem (With Validation)',
-      description: 'Substitution problem with real-time API validation and feedback',
-      path: '/substitution-problem-validation',
-    },
-    {
-      id: 'difference-of-squares',
-      name: 'Difference of Squares',
-      description: 'Factor expressions using the difference of squares pattern with validation',
-      path: '/difference-of-squares',
-    },
-    {
-      id: 'reduction-equalization',
-      name: 'Reduction and Equalization',
-      description: 'Solve systems of equations using the reduction and equalization method with validation',
-      path: '/reduction-equalization',
+      id: 'problem-completion',
+      name: 'Problem Completion',
+      description: 'View your completed problems',
+      path: '/problem-completion',
     },
   ];
 
   return (
     <div className="homepage">
       <header className="homepage-header">
-        <h1>Math Input Demo</h1>
-        <p>Explore different math input libraries for web applications</p>
+        <h1>Math Problem Solver</h1>
+        <p>Solve math problems with interactive chat feedback</p>
       </header>
       
-      <section style={{ marginBottom: '4rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: '#646cff' }}>Single Line Input</h2>
-        <div className="demos-grid">
-          {singleLineDemos.map((demo) => (
-            <Link key={demo.id} to={demo.path} className="demo-card">
-              <h2>{demo.name}</h2>
-              <p>{demo.description}</p>
-              <span className="demo-link">Try it →</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section style={{ marginBottom: '4rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: '#646cff' }}>Multi-line Input</h2>
-        <div className="demos-grid">
-          {multilineDemos.map((demo) => (
-            <Link key={demo.id} to={demo.path} className="demo-card">
-              <h2>{demo.name}</h2>
-              <p>{demo.description}</p>
-              <span className="demo-link">Try it →</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <section>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: '#646cff' }}>Problem Demos</h2>
         <div className="demos-grid">
-          {problemDemos.map((demo) => (
-            <Link key={demo.id} to={demo.path} className="demo-card">
-              <h2>{demo.name}</h2>
-              <p>{demo.description}</p>
-              <span className="demo-link">Try it →</span>
+          {pages.map((page) => (
+            <Link key={page.id} to={page.path} className="demo-card">
+              <h2>{page.name}</h2>
+              <p>{page.description}</p>
+              <span className="demo-link">Go →</span>
             </Link>
           ))}
         </div>

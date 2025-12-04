@@ -8,6 +8,9 @@ import MathQuillMultilineDemo from './components/MathQuillMultilineDemo';
 import CodeMirrorLatexDemo from './components/CodeMirrorLatexDemo';
 import SubstitutionProblemDemo from './components/SubstitutionProblemDemo';
 import SubstitutionProblemWithValidation from './components/SubstitutionProblemWithValidation';
+import SubstitutionProblemWithChat from './components/SubstitutionProblemWithChat';
+import ProblemInputPage from './components/ProblemInputPage';
+import ProblemCompletionPage from './components/ProblemCompletionPage';
 import DifferenceOfSquaresProblem from './components/DifferenceOfSquaresProblem';
 import ReductionEqualizationProblem from './components/ReductionEqualizationProblem';
 import './App.css';
@@ -15,7 +18,7 @@ import './App.css';
 const Navigation = () => {
   const location = useLocation();
   
-  if (location.pathname === '/') {
+  if (location.pathname === '/' || location.pathname === '/problem-completion') {
     return null;
   }
 
@@ -31,17 +34,10 @@ function App() {
     <Router>
       <Navigation />
       <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/mathlive" element={<MathLiveDemo />} />
-        <Route path="/mathquill" element={<MathQuillDemo />} />
-        <Route path="/desmos" element={<DesmosDemo />} />
-        <Route path="/mathlive-multiline" element={<MathLiveMultilineDemo />} />
-        <Route path="/mathquill-multiline" element={<MathQuillMultilineDemo />} />
-        <Route path="/codemirror-latex" element={<CodeMirrorLatexDemo />} />
-        <Route path="/substitution-problem" element={<SubstitutionProblemDemo />} />
-        <Route path="/substitution-problem-validation" element={<SubstitutionProblemWithValidation />} />
-        <Route path="/difference-of-squares" element={<DifferenceOfSquaresProblem />} />
-        <Route path="/reduction-equalization" element={<ReductionEqualizationProblem />} />
+        <Route path="/" element={<ProblemInputPage />} />
+        <Route path="/problem-chat" element={<SubstitutionProblemWithChat />} />
+        <Route path="/problem-completion" element={<ProblemCompletionPage />} />
+        <Route path="/home" element={<Homepage />} />
       </Routes>
     </Router>
   );

@@ -79,6 +79,7 @@ export interface BatchValidationOverall {
   validSteps?: number;
   invalidSteps?: number;
   readyForAnswerCheck?: boolean;
+  finished?: boolean;
   finalAnswer?: {
     isCorrect?: boolean;
     feedback?: string;
@@ -93,6 +94,7 @@ export interface BatchValidationResponse {
   lines: BatchValidationLine[];
   overall?: BatchValidationOverall;
   telemetry?: Record<string, any>;
+  chat_response?: string;
 }
 
 export interface EquivalenceResponse {
