@@ -50,7 +50,7 @@ const ReductionEqualizationProblem = () => {
   } | null>(null);
 
   const problem = {
-    type: 'elimination',
+    type: 'substitution',
     title: 'System of Equations - Reduction and Equalization',
     description: 'Solve the following system of equations using the reduction and equalization method:',
     equations: [

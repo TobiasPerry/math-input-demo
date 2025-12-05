@@ -7,6 +7,44 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+export type ProblemType =
+  | 'substitution'
+  | 'simplify'
+  | 'factor'
+  | 'arithmetic';
+
+export interface ProblemPayload {
+  problem_code: string;
+  type: ProblemType;
+  title?: string;
+  description?: string;
+  equations?: string[];
+  expression?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface ProblemRecord extends ProblemPayload {
+  problemData?: {
+    title?: string;
+    description?: string;
+    equations?: string[];
+    expression?: string;
+    metadata?: Record<string, any>;
+  };
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProblemListResponse {
+  items: ProblemRecord[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
 export interface ValidationResponse {
   isValid: boolean;
   isCorrect: boolean;
@@ -413,4 +451,86 @@ export async function calculateExpression(
   }
 
   return response.json();
+}
+
+/**
+ * Problems API helpers
+ */
+const buildProblemUrl = (path: string) => `${API_BASE_URL}${path}`;
+
+const asJson = async (response: Response) => {
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+    throw new Error(error.error?.message || `Request failed: ${response.statusText}`);
+  }
+
+  // Some endpoints (e.g., DELETE) may return 204/empty body
+  const text = await response.text().catch(() => '');
+  if (!text || text.trim().length === 0) {
+    return { success: true };
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error('Invalid JSON response');
+  }
+};
+
+export async function createProblem(payload: ProblemPayload): Promise<ProblemRecord> {
+  const response = await fetch(buildProblemUrl('/problems'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  return asJson(response);
+}
+
+export async function updateProblem(
+  problemCode: string,
+  payload: Partial<ProblemPayload>
+): Promise<ProblemRecord> {
+  const response = await fetch(buildProblemUrl(`/problems/${encodeURIComponent(problemCode)}`), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  return asJson(response);
+}
+
+export async function deleteProblem(problemCode: string): Promise<{ success: boolean }> {
+  const response = await fetch(buildProblemUrl(`/problems/${encodeURIComponent(problemCode)}`), {
+    method: 'DELETE',
+  });
+  return asJson(response);
+}
+
+export async function getProblem(problemCode: string): Promise<ProblemRecord> {
+  const response = await fetch(buildProblemUrl(`/problems/${encodeURIComponent(problemCode)}`));
+  return asJson(response);
+}
+
+export async function listProblems(
+  page: number = 1,
+  pageSize: number = 20
+): Promise<ProblemListResponse> {
+  const response = await fetch(
+    buildProblemUrl(`/problems?page=${page}&page_size=${pageSize}`)
+  );
+  return asJson(response);
+}
+
+export async function listProblemsByType(
+  type: ProblemType,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<ProblemListResponse> {
+  const response = await fetch(
+    buildProblemUrl(`/problems/type/${encodeURIComponent(type)}?page=${page}&page_size=${pageSize}`)
+  );
+  return asJson(response);
 }
