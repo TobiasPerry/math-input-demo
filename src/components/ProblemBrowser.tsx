@@ -197,9 +197,9 @@ const ProblemBrowser = () => {
               width: '100%',
               padding: '0.6rem',
               borderRadius: '6px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
-              color: 'white',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              color: '#111827',
             }}
           >
             <option value="all">All types</option>
@@ -225,7 +225,7 @@ const ProblemBrowser = () => {
           >
             🔄 Refresh
           </button>
-          <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem' }}>
+          <span style={{ color: 'rgba(31, 41, 55, 0.8)', fontSize: '0.9rem' }}>
             {paginationLabel}
           </span>
         </div>
@@ -247,11 +247,11 @@ const ProblemBrowser = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {loading && (
-          <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Loading problems…</div>
+          <div style={{ color: 'rgba(31, 41, 55, 0.8)' }}>Loading problems…</div>
         )}
 
         {!loading && problems.length === 0 && (
-          <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+          <div style={{ color: 'rgba(31, 41, 55, 0.8)' }}>
             No problems found. Try refreshing or creating one above.
           </div>
         )}
@@ -264,8 +264,9 @@ const ProblemBrowser = () => {
               style={{
                 padding: '1rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
               }}
             >
               <div
@@ -281,7 +282,7 @@ const ProblemBrowser = () => {
                   <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
                     {problem.title || '(Untitled)'}
                   </div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'rgba(55, 65, 81, 0.85)' }}>
                     {problem.problem_code} · {problem.type}
                   </div>
                 </div>
@@ -334,7 +335,7 @@ const ProblemBrowser = () => {
               </div>
 
               {!isEditing && (
-                <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.95rem' }}>
+                <div style={{ color: 'rgba(31, 41, 55, 0.9)', fontSize: '0.95rem' }}>
                   {problem.description || 'No description'}
                 </div>
               )}
@@ -354,9 +355,9 @@ const ProblemBrowser = () => {
                           width: '100%',
                           padding: '0.65rem',
                           borderRadius: '6px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                          color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                         }}
                       />
                     </div>
@@ -373,9 +374,9 @@ const ProblemBrowser = () => {
                           width: '100%',
                           padding: '0.65rem',
                           borderRadius: '6px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                          color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                         }}
                       >
                         {problemTypes.map(type => (
@@ -399,9 +400,9 @@ const ProblemBrowser = () => {
                         width: '100%',
                         padding: '0.65rem',
                         borderRadius: '6px',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                        color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                         resize: 'vertical',
                       }}
                     />
@@ -420,9 +421,9 @@ const ProblemBrowser = () => {
                           width: '100%',
                           padding: '0.65rem',
                           borderRadius: '6px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                          color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                           fontFamily: 'monospace',
                         }}
                       />
@@ -440,9 +441,9 @@ const ProblemBrowser = () => {
                           width: '100%',
                           padding: '0.65rem',
                           borderRadius: '6px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                          color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                           fontFamily: 'monospace',
                         }}
                       />
@@ -461,9 +462,9 @@ const ProblemBrowser = () => {
                         width: '100%',
                         padding: '0.65rem',
                         borderRadius: '6px',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                        color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                         fontFamily: 'monospace',
                       }}
                     />
@@ -490,9 +491,9 @@ const ProblemBrowser = () => {
                       onClick={cancelEdit}
                       style={{
                         padding: '0.5rem 0.9rem',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        color: 'white',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                      backgroundColor: '#f3f4f6',
+                      color: '#111827',
+                      border: '1px solid #e5e7eb',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         fontSize: '0.9rem',
@@ -525,7 +526,7 @@ const ProblemBrowser = () => {
           >
             ← Prev
           </button>
-          <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+          <div style={{ color: 'rgba(31, 41, 55, 0.85)' }}>
             Page {page} / {totalPages}
           </div>
           <button

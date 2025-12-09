@@ -12,12 +12,12 @@
 .demo-header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
-  color: #646cff;
+  color: #1f2937;
 }
 
 .demo-header p {
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(31, 41, 55, 0.72);
 }
 
 .demo-content {
@@ -28,10 +28,11 @@
 
 .input-section,
 .output-section {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .input-section h2,
@@ -39,7 +40,7 @@
   margin-top: 0;
   margin-bottom: 1rem;
   font-size: 1.5rem;
-  color: #646cff;
+  color: #1f2937;
 }
 
 .latex-output {
@@ -47,29 +48,29 @@
   padding: 1rem;
   font-family: 'Courier New', monospace;
   font-size: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  color: inherit;
+  background: #f9fafb;
+  color: #111827;
   resize: vertical;
   box-sizing: border-box;
 }
 
 .latex-output:focus {
-  outline: 2px solid #646cff;
+  outline: 2px solid #4f46e5;
   outline-offset: 2px;
 }
 
 .info-section {
-  background: rgba(100, 108, 255, 0.1);
-  border: 1px solid rgba(100, 108, 255, 0.3);
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
   border-radius: 12px;
   padding: 1.5rem;
 }
 
 .info-section h3 {
   margin-top: 0;
-  color: #646cff;
+  color: #1f2937;
 }
 
 .info-section ul {
@@ -79,32 +80,6 @@
 
 .info-section li {
   margin-bottom: 0.5rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-@media (prefers-color-scheme: light) {
-  .demo-header p {
-    color: rgba(0, 0, 0, 0.7);
-  }
-
-  .input-section,
-  .output-section {
-    background: rgba(0, 0, 0, 0.02);
-    border-color: rgba(0, 0, 0, 0.1);
-  }
-
-  .latex-output {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: rgba(0, 0, 0, 0.2);
-  }
-
-  .info-section {
-    background: rgba(100, 108, 255, 0.05);
-    border-color: rgba(100, 108, 255, 0.2);
-  }
-
-  .info-section li {
-    color: rgba(0, 0, 0, 0.8);
-  }
+  color: #111827;
 }
 

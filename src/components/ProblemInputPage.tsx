@@ -297,8 +297,8 @@ const ProblemInputPage = () => {
             className="input-section"
             style={{ flex: '1 1 0', minWidth: '340px', maxWidth: '100%' }}
           >
-            <h1>Select or Create Problem</h1>
-            <p style={{ marginBottom: '2rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+            <h1>Tito Whiteboard</h1>
+            <p style={{ marginBottom: '2rem', color: 'rgba(31, 41, 55, 0.8)' }}>
               Choose a pre-generated problem or create your own custom problem.
             </p>
 
@@ -362,9 +362,9 @@ const ProblemInputPage = () => {
                 padding: '0.75rem',
                 fontSize: '1rem',
                 borderRadius: '6px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                color: 'white',
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb',
+                color: '#111827',
                 cursor: 'pointer',
               }}
             >
@@ -388,34 +388,34 @@ const ProblemInputPage = () => {
                     onClick={() => handleStartFromProblem(problem)}
                     style={{
                       padding: '1rem',
-                      backgroundColor: 'rgba(100, 108, 255, 0.1)',
-                      border: '1px solid rgba(100, 108, 255, 0.3)',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(100, 108, 255, 0.2)';
-                      e.currentTarget.style.borderColor = 'rgba(100, 108, 255, 0.5)';
+                      e.currentTarget.style.backgroundColor = '#eef2ff';
+                      e.currentTarget.style.borderColor = '#c7d2fe';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(100, 108, 255, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(100, 108, 255, 0.3)';
+                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                      e.currentTarget.style.borderColor = '#e5e7eb';
                     }}
                   >
                     <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
                       {problem.title}
                     </div>
                     {problem.description && (
-                      <div style={{ marginBottom: '0.5rem', color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem' }}>
+                      <div style={{ marginBottom: '0.5rem', color: 'rgba(55, 65, 81, 0.9)', fontSize: '0.9rem' }}>
                         {problem.description}
                       </div>
                     )}
                     {problem.equations && (
                       <div style={{ 
-                        fontFamily: 'monospace', 
+                        fontFamily: 'monospace',
                         fontSize: '0.95rem',
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: '#111827',
                       }}>
                         {problem.equations.map((eq, i) => (
                           <div key={i} style={{ marginTop: i > 0 ? '0.25rem' : 0 }}>
@@ -426,17 +426,17 @@ const ProblemInputPage = () => {
                     )}
                     {problem.expression && (
                       <div style={{ 
-                        fontFamily: 'monospace', 
+                        fontFamily: 'monospace',
                         fontSize: '0.95rem',
-                        color: 'rgba(255, 255, 255, 0.9)',
+                        color: '#111827',
                       }}>
                         {problem.expression}
                       </div>
                     )}
                     <div style={{ 
                       marginTop: '0.5rem', 
-                      fontSize: '0.85rem', 
-                      color: 'rgba(100, 108, 255, 0.8)',
+                      fontSize: '0.85rem',
+                      color: '#4f46e5',
                       fontStyle: 'italic',
                     }}>
                       Click to start →
@@ -465,12 +465,12 @@ const ProblemInputPage = () => {
                 padding: '0.75rem',
                 fontSize: '1rem',
                 borderRadius: '6px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                color: 'white',
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb',
+                color: '#111827',
               }}
             />
-            <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+            <small style={{ color: 'rgba(55, 65, 81, 0.7)' }}>
               This is the unique id stored in your Problems API.
             </small>
           </div>
@@ -490,9 +490,9 @@ const ProblemInputPage = () => {
                 padding: '0.75rem',
                 fontSize: '1rem',
                 borderRadius: '6px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                color: 'white',
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb',
+                color: '#111827',
               }}
             />
           </div>
@@ -512,9 +512,9 @@ const ProblemInputPage = () => {
                 padding: '0.75rem',
                 fontSize: '1rem',
                 borderRadius: '6px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                color: 'white',
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb',
+                color: '#111827',
                 resize: 'vertical',
                 fontFamily: 'inherit',
               }}
@@ -539,9 +539,9 @@ const ProblemInputPage = () => {
                       padding: '0.75rem',
                       fontSize: '1rem',
                       borderRadius: '6px',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                      color: 'white',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb',
+                      color: '#111827',
                       fontFamily: 'monospace',
                     }}
                   />
@@ -602,9 +602,9 @@ const ProblemInputPage = () => {
                   padding: '0.75rem',
                   fontSize: '1rem',
                   borderRadius: '6px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                  color: 'white',
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb',
+                color: '#111827',
                   fontFamily: 'monospace',
                 }}
               />
@@ -649,9 +649,8 @@ const ProblemInputPage = () => {
             style={{ flex: '1 1 0', minWidth: '340px', maxWidth: '100%' }}
           >
             <h2 style={{ marginBottom: '0.5rem' }}>Problems API Browser</h2>
-            <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
-              Fetch, edit, or delete problems stored via your API. You can open any
-              problem in the chat or refresh the list to pull the latest changes.
+            <p style={{ marginBottom: '1rem', color: 'rgba(31, 41, 55, 0.8)' }}>
+              Problemas subidos a la API de staging.
             </p>
             <ProblemBrowser />
           </div>

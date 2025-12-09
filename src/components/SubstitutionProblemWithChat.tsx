@@ -77,15 +77,15 @@ const SubstitutionProblemWithChat = () => {
   const problem = routeProblem || defaultProblem;
 
   const [work, setWork] = useState<string[]>(['']);
-  const [lineFeedback, setLineFeedback] = useState<Map<number, LineFeedback>>(new Map());
+  const [, setLineFeedback] = useState<Map<number, LineFeedback>>(new Map());
   const [overallProgress, setOverallProgress] = useState<{
     stepsCompleted: number;
     totalSteps: number;
     onTrack: boolean;
   } | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [hint, setHint] = useState<string | null>(null);
-  const [hintLevel, setHintLevel] = useState<'gentle' | 'moderate' | 'strong' | null>(null);
+  const [, setHint] = useState<string | null>(null);
+  const [, setHintLevel] = useState<'gentle' | 'moderate' | 'strong' | null>(null);
   const [answerFeedback, setAnswerFeedback] = useState<string | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   const [solutionCheck, setSolutionCheck] = useState<{

@@ -1,18 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Homepage from './components/Homepage';
-import MathLiveDemo from './components/MathLiveDemo';
-import MathQuillDemo from './components/MathQuillDemo';
-import DesmosDemo from './components/DesmosDemo';
-import MathLiveMultilineDemo from './components/MathLiveMultilineDemo';
-import MathQuillMultilineDemo from './components/MathQuillMultilineDemo';
-import CodeMirrorLatexDemo from './components/CodeMirrorLatexDemo';
-import SubstitutionProblemDemo from './components/SubstitutionProblemDemo';
-import SubstitutionProblemWithValidation from './components/SubstitutionProblemWithValidation';
 import SubstitutionProblemWithChat from './components/SubstitutionProblemWithChat';
 import ProblemInputPage from './components/ProblemInputPage';
 import ProblemCompletionPage from './components/ProblemCompletionPage';
-import DifferenceOfSquaresProblem from './components/DifferenceOfSquaresProblem';
-import ReductionEqualizationProblem from './components/ReductionEqualizationProblem';
 import './App.css';
 
 const Navigation = () => {
