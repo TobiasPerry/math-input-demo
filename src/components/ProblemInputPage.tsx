@@ -413,7 +413,7 @@ const ProblemInputPage = () => {
                     )}
                     {problem.equations && (
                       <div style={{ 
-                        fontFamily: 'monospace',
+                        fontFamily: 'monospace', 
                         fontSize: '0.95rem',
                         color: '#111827',
                       }}>
@@ -426,7 +426,7 @@ const ProblemInputPage = () => {
                     )}
                     {problem.expression && (
                       <div style={{ 
-                        fontFamily: 'monospace',
+                        fontFamily: 'monospace', 
                         fontSize: '0.95rem',
                         color: '#111827',
                       }}>
@@ -435,7 +435,7 @@ const ProblemInputPage = () => {
                     )}
                     <div style={{ 
                       marginTop: '0.5rem', 
-                      fontSize: '0.85rem',
+                      fontSize: '0.85rem', 
                       color: '#4f46e5',
                       fontStyle: 'italic',
                     }}>
@@ -591,7 +591,7 @@ const ProblemInputPage = () => {
                 value={expression}
                 onChange={(e) => setExpression(e.target.value)}
                 placeholder={
-                  problemType === 'factor'
+                  problemType === 'factor' 
                     ? 'e.g., x^2 - 16'
                     : problemType === 'simplify'
                     ? 'e.g., x^4/x^2'

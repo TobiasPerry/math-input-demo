@@ -9,7 +9,6 @@ import {
   type BatchValidationLine,
   type ValidationLineStatus,
 } from '../utils/validationApi';
-import { latexArrayToPlainMath } from '../utils/latexToPlainMath';
 import './Demo.css';
 
 interface LineFeedback {
@@ -57,6 +56,9 @@ interface ProblemData {
   equations?: string[];
   expression?: string;
 }
+
+const normalizeLatexFractions = (line: string) =>
+  line.replace(/\\frac\s*([^{\s])\s*([^{\s])/g, (_match, num, den) => `\\frac{${num}}{${den}}`);
 
 const SubstitutionProblemWithChat = () => {
   const location = useLocation();
@@ -230,8 +232,9 @@ const SubstitutionProblemWithChat = () => {
 
   const handleValidateAll = async () => {
     const nonEmptyLines = work.filter(line => line.trim().length > 0);
+    const normalizedLines = nonEmptyLines.map(normalizeLatexFractions);
 
-    if (nonEmptyLines.length === 0) {
+    if (normalizedLines.length === 0) {
       addChatMessage({
         type: 'info',
         content: 'No work to validate. Please enter some equations first.',
@@ -262,12 +265,10 @@ const SubstitutionProblemWithChat = () => {
     }
 
     try {
-      const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
-      
       const batchResult = await validateProblemBatch(
         problem.type,
         problemData,
-        plainMathLines,
+        normalizedLines,
         {
           includeTelemetry: true,
           requestHints: false,
@@ -399,7 +400,7 @@ const SubstitutionProblemWithChat = () => {
       }
 
       if (!batchResult.overall?.finalAnswer) {
-        const lastLine = plainMathLines[plainMathLines.length - 1] || '';
+        const lastLine = normalizedLines[normalizedLines.length - 1] || '';
         if (lastLine && /x\s*=/.test(lastLine) && /y\s*=/.test(lastLine)) {
           try {
             const xMatch = lastLine.match(/x\s*=\s*([^\s,]+)/i);
@@ -501,7 +502,8 @@ const SubstitutionProblemWithChat = () => {
 
   const handleGetHint = async () => {
     const nonEmptyLines = work.filter(line => line.trim().length > 0);
-    if (nonEmptyLines.length === 0) {
+    const normalizedLines = nonEmptyLines.map(normalizeLatexFractions);
+    if (normalizedLines.length === 0) {
       addChatMessage({
         type: 'info',
         content: 'Please enter some work first before requesting a hint.',
@@ -509,14 +511,13 @@ const SubstitutionProblemWithChat = () => {
       return;
     }
 
-    const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
-    const lastLine = plainMathLines[plainMathLines.length - 1] || '';
+    const lastLine = normalizedLines[normalizedLines.length - 1] || '';
     
     try {
       const hintResult: HintResponse = await getHint(
         problem.type,
         lastLine,
-        plainMathLines.slice(0, -1)
+        normalizedLines.slice(0, -1)
       );
       setHint(hintResult.hint);
       setHintLevel(hintResult.level);

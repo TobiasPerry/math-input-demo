@@ -8,7 +8,6 @@ import {
   type BatchValidationLine,
   type ValidationLineStatus,
 } from '../utils/validationApi';
-import { latexArrayToPlainMath } from '../utils/latexToPlainMath';
 import './Demo.css';
 
 interface LineFeedback {
@@ -84,11 +83,10 @@ const DifferenceOfSquaresProblem = () => {
     setIsAnswerCorrect(null);
 
     try {
-      const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
       const batchResult = await validateProblemBatch(
         problem.type,
         { expression: problem.expression },
-        plainMathLines,
+        nonEmptyLines,
         {
           includeTelemetry: true,
           requestHints: false,
@@ -259,14 +257,13 @@ const DifferenceOfSquaresProblem = () => {
     if (nonEmptyLines.length === 0) return;
 
     // Convert LaTeX to plain math before sending to API
-    const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
-    const lastLine = plainMathLines[plainMathLines.length - 1] || '';
+    const lastLine = nonEmptyLines[nonEmptyLines.length - 1] || '';
     
     try {
       const hintResult: HintResponse = await getHint(
         problem.type,
         lastLine,
-        plainMathLines.slice(0, -1)
+        nonEmptyLines.slice(0, -1)
       );
       setHint(hintResult.hint);
       setHintLevel(hintResult.level);

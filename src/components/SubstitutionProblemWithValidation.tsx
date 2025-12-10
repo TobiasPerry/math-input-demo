@@ -8,7 +8,6 @@ import {
   type BatchValidationLine,
   type ValidationLineStatus,
 } from '../utils/validationApi';
-import { latexArrayToPlainMath } from '../utils/latexToPlainMath';
 import './Demo.css';
 
 interface LineFeedback {
@@ -93,11 +92,10 @@ const SubstitutionProblemWithValidation = () => {
     setIsAnswerCorrect(null);
 
     try {
-      const plainMathLines = latexArrayToPlainMath(nonEmptyLines);
       const batchResult = await validateProblemBatch(
         problem.type,
         { equations: problem.equations },
-        plainMathLines,
+        nonEmptyLines,
         {
           includeTelemetry: true,
           requestHints: false,

@@ -154,7 +154,12 @@ const MathLiveMultilineEditor: React.FC<MathLiveMultilineEditorProps> = ({
         // Handle input - use current index from fieldRef to avoid closure issues
         const inputHandler = (evt: any) => {
           const currentIndex = fieldRef.index;
-          updateEquation(currentIndex, evt.target.value);
+          const expanded =
+            typeof (mathField as any).getValue === 'function'
+              ? (mathField as any).getValue('latex-expanded')
+              : undefined;
+          const nextValue = expanded ?? (evt?.target as any)?.value ?? '';
+          updateEquation(currentIndex, nextValue);
         };
         mathField.addEventListener('input', inputHandler);
 
