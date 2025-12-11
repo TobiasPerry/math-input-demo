@@ -20,9 +20,8 @@ const MathWhiteboard = () => {
       raw: filteredLines,
     };
     console.log('[MathWhiteboard] postMessage', { type, context });
-    if (typeof window !== 'undefined' && window.parent) {
-      window.parent.postMessage({ type, context }, '*');
-    }
+    window.parent.postMessage({ type, context }, '*');
+    
   };
 
   const handleSendWork = () => send('whiteboard_submit');

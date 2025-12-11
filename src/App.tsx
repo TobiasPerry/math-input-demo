@@ -4,6 +4,7 @@ import SubstitutionProblemWithChat from './components/SubstitutionProblemWithCha
 import ProblemInputPage from './components/ProblemInputPage';
 import ProblemCompletionPage from './components/ProblemCompletionPage';
 import MathWhiteboard from './components/MathWhiteboard';
+import WhiteboardIframe from './components/WhiteboardIframe';
 import './App.css';
 
 const Navigation = () => {
@@ -30,6 +31,7 @@ function App() {
         <Route path="/problem-completion" element={<ProblemCompletionPage />} />
         <Route path="/home" element={<Homepage />} />
         <Route path="/whiteboard" element={<MathWhiteboard />} />
+        <Route path="/iframe" element={<WhiteboardIframe />} />
       </Routes>
     </Router>
   );

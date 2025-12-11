@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import 'mathlive';
+import { MathfieldElement } from 'mathlive';
 import './Demo.css';
 
 interface MathFieldRef {
@@ -8,6 +9,16 @@ interface MathFieldRef {
   wrapper: HTMLElement;
   lineNumber: HTMLElement;
 }
+
+// Disable MathLive sound assets (avoids requests to plonk.wav and related files)
+MathfieldElement.soundsDirectory = null;
+MathfieldElement.plonkSound = null;
+MathfieldElement.keypressSound = {
+  default: null,
+  delete: null,
+  return: null,
+  spacebar: null,
+};
 
 export interface MathLiveMultilineEditorProps {
   /** Initial equations/expressions */

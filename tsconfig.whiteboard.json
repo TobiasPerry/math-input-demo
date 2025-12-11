@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.app.json",
+  "include": [
+    "src/whiteboard.tsx",
+    "src/components/MathWhiteboard.tsx",
+    "src/components/MathLiveMultilineEditor.tsx",
+    "src/index.css",
+    "src/components/Demo.css"
+  ]
+}
+
